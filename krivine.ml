@@ -17,6 +17,7 @@ type table = (string*closure) list;;
 (*We have to device this to get from a closure to an answer*)
 
 exception Stuck of string;;
+exception Infinite_loop;;
 
 let rec find_var (x:string) (gamma: table) : closure option = match gamma with
     | [] -> None
@@ -29,17 +30,18 @@ let rec rem x gamma = match gamma with
 
 let augment (x:string) (cl:closure) (gamma: table) = let new_table = rem x gamma in (x,cl)::new_table;;
 
-let rec k_solve (curr_clos: closure) (stack: closure list) : answer = 
+let rec k_solve (curr_clos: closure) (stack: closure list) (fuel:int) : answer = 
+        if fuel=(-1) then raise (Infinite_loop) else
         match (curr_clos, stack) with 
         |(Clos (Var x, gamma), s) -> (let v = find_var x gamma in 
             match v with 
-            | Some (cl) -> k_solve cl s
+            | Some (cl) -> k_solve cl s (fuel-1)
             | None -> raise (Stuck ("Don't know the value of "^x))
         )
 
-        | (Clos (Lamda (x, e), gamma), cl::snew) -> k_solve (Clos (e, augment x cl gamma)) snew
+        | (Clos (Lamda (x, e), gamma), cl::snew) -> k_solve (Clos (e, augment x cl gamma)) snew (fuel-1)
 
-        | (Clos (App (e1, e2), gamma), s) -> k_solve (Clos (e1, gamma)) ((Clos (e2, gamma))::s)
+        | (Clos (App (e1, e2), gamma), s) -> k_solve (Clos (e1, gamma)) ((Clos (e2, gamma))::s) (fuel-1)
         
         | (Clos (Lamda (x, cl), gamma), []) -> VClos (Lamda (x,cl), gamma)
 ;;
