@@ -1,4 +1,5 @@
 all:
 	ocamlc -o krivine krivine.ml
-	ocamlc -c secd.ml
-	ocamlc -o secd krivine.cmo secd.cmo
+	ocamlc -o k_ext k_ext.ml
+	ocamlc -o secd_ext secd_ext.ml
+	ocamlc -o secd secd.ml
